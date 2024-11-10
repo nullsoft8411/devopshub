@@ -1,0 +1,112 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      String   @default("user")
+  avatar    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  enrolledCourses    Course[]
+  completedLessons   Lesson[]
+  labProgress        LabProgress[]
+  certificates       Certificate[]
+}
+
+model Course {
+  id          String   @id @default(cuid())
+  title       String
+  description String   @db.Text
+  duration    String
+  level       String
+  category    String
+  image       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  enrolledUsers User[]
+  lessons       Lesson[]
+  path          LearningPath? @relation(fields: [pathId], references: [id])
+  pathId        String?
+}
+
+model Lesson {
+  id        String   @id @default(cuid())
+  title     String
+  content   String   @db.Text
+  duration  String
+  order     Int
+  type      String   // video, text, quiz
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  course          Course @relation(fields: [courseId], references: [id])
+  courseId        String
+  completedByUsers User[]
+}
+
+model LearningPath {
+  id          String   @id @default(cuid())
+  title       String
+  description String   @db.Text
+  duration    String
+  level       String
+  image       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  courses Course[]
+}
+
+model Lab {
+  id          String   @id @default(cuid())
+  title       String
+  description String   @db.Text
+  duration    String
+  difficulty  String
+  category    String
+  tasks       Json     // Array of tasks
+  image       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  progress LabProgress[]
+}
+
+model LabProgress {
+  id            String    @id @default(cuid())
+  completedTasks Json     // Array of completed task IDs
+  startedAt     DateTime  @default(now())
+  completedAt   DateTime?
+
+  // Relations
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+  lab    Lab    @relation(fields: [labId], references: [id])
+  labId  String
+}
+
+model Certificate {
+  id        String   @id @default(cuid())
+  type      String   // course, path, lab
+  issuedAt  DateTime @default(now())
+  
+  // Relations
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+}
